@@ -80,10 +80,26 @@ typedef Class SMStateType;
  */
 @interface SMTransition : NSObject
 
+/**
+ * The type of the state that is being transitioned from.
+ */
 @property (nonatomic, weak) SMStateType fromStateType;
+
+/**
+ * The type of the state that is being transitioned to.
+ */
 @property (nonatomic, weak) SMStateType toStateType;
+
+/**
+ * The state machine that is performing the transition.
+ */
 @property (nonatomic, weak) SMStateMachine *stateMachine;
-@property (nonatomic, strong) id userInfo;
+
+/**
+ * Store custom data that needs to be passed
+ * along in the context.
+ */
+@property (nonatomic, weak) NSMutableDictionary *context;
 
 @end
 
@@ -103,15 +119,15 @@ typedef Class SMStateType;
  * @param initialState The initial state of the machine.
  * @return On success, a state machine. On failure, i.e. invalid transitions, nil.
  */
-+ (instancetype)stateMachineWithTransitions:(NSArray *)transitions initialState:(id<SMState>)initialState;
++ (instancetype)stateMachineWithTransitions:(NSArray *)transitions
+                               initialState:(id<SMState>)initialState;
 
 /**
  * Go to a new state (asynchronously).
  * Ignores transitions that have not been added to the state machine.
  *
- * @param userInfo Any object. It will be passed along in the transition.
  * @return Returns YES if transition is legal.
  */
-- (BOOL)goToState:(id<SMState>)toState userInfo:(id)userInfo;
+- (BOOL)goToState:(id<SMState>)toState;
 
 @end

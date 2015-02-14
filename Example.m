@@ -1,11 +1,9 @@
-
 #import <Foundation/Foundation.h>
 #import "SMStateMachine.h"
 
 @interface MyInitialState : NSObject <SMState>
 @end
 @implementation MyInitialState
-- (void)dealloc { NSLog(@"%s", __func__); }
 - (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 - (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 - (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
@@ -18,7 +16,18 @@
 - (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 - (void)didEnterWithTransition:(SMTransition *)transition {
     NSLog(@"%s", __func__);
-    [transition.stateMachine goToState:[MyInitialState new] userInfo:nil];
+    [transition.stateMachine goToState:[MyInitialState new]];
+}
+@end
+
+@interface MyOtherOtherState : NSObject <SMState>
+@end
+@implementation MyOtherOtherState
+- (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
+- (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
+- (void)didEnterWithTransition:(SMTransition *)transition {
+    NSLog(@"%s", __func__);
+    [transition.stateMachine goToState:[MyThirdState new]];
 }
 @end
 
@@ -29,19 +38,19 @@
 - (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 - (void)didEnterWithTransition:(SMTransition *)transition {
     NSLog(@"%s", __func__);
-    [transition.stateMachine goToState:[MyThirdState new] userInfo:nil];
+    [transition.stateMachine goToState:[MyOtherOtherState new]];
 }
 @end
 
 void runStateMachine()
 {
     NSArray *transitions = @[SMTransition(MyInitialState, MyOtherState),
-                             SMTransition(MyOtherState, MyThirdState),
-                             SMTransition(MyThirdState, MyOtherState)];
+                             SMTransition(MyOtherOtherState, MyThirdState),
+                             SMTransition(SMStateTypeAny, MyOtherOtherState)];
     
     SMStateMachine *stateMachine = [SMStateMachine stateMachineWithTransitions:transitions initialState:[MyInitialState new]];
     stateMachine.logTransitions = YES;
-    [stateMachine goToState:[MyOtherState new] userInfo:nil];
+    [stateMachine goToState:[MyOtherState new]];
     
     sleep(3);
 }

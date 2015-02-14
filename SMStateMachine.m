@@ -34,6 +34,7 @@
 @property (nonatomic, strong) NSArray *transitions;
 @property (nonatomic, strong) id<SMState> currentState;
 @property (nonatomic, strong) id<SMState> snapshotState;
+@property (nonatomic, strong) NSMutableDictionary *context;
 
 @end
 
@@ -49,7 +50,7 @@
     // Make sure the state types are actually states
     for (NSArray *entry in transitions) {
         id fromStateType = entry[0];
-        
+                
         if (!([fromStateType conformsToProtocol:@protocol(SMState)] || fromStateType == SMStateTypeAny.class)) {
             return nil;
         }
@@ -70,7 +71,8 @@
     if (self) {
         [self setUpTransitions:transitions];
         [self setUpDispatchQueue];
-        [self goToState:initialState userInfo:nil];
+        _context = [NSMutableDictionary dictionary];
+        [self goToState:initialState];
     }
     return self;
 }
@@ -100,7 +102,7 @@
     return NO;
 }
 
-- (BOOL)goToState:(id<SMState>)toState userInfo:(id)userInfo
+- (BOOL)goToState:(id<SMState>)toState
 {
     @synchronized (self) {
         if (toState == nil) {
@@ -125,7 +127,7 @@
         transition.fromStateType = fromState ? SMStateType(fromState) : nil /* initial state */;
         transition.toStateType = SMStateType(toState);
         transition.stateMachine = self;
-        transition.userInfo = userInfo;
+        transition.context = _context;
         
         self.snapshotState = toState;
         
