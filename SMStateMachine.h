@@ -115,7 +115,7 @@ typedef Class SMStateType;
 /**
  * The state the machine is currently in.
  */
-@property (nonatomic, strong) id<SMState> currentState;
+@property (nonatomic, strong, readonly) id<SMState> currentState;
 
 /**
  * Create a state machine that accepts the specified transitions.

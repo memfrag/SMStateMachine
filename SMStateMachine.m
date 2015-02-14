@@ -32,7 +32,7 @@
 + (instancetype)new __attribute__((unavailable("new not available, call sharedInstance instead")));
 
 @property (nonatomic, strong) NSArray *transitions;
-@property (nonatomic, strong) id<SMState> currentState;
+@property (nonatomic, strong, readwrite) id<SMState> currentState;
 @property (nonatomic, strong) NSMutableDictionary *context;
 
 @end
