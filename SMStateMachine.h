@@ -24,6 +24,7 @@
 
 @class SMStateMachine;
 @class SMTransition;
+@class SMStateTypeWildcard;
 
 #define SMTransition(from, to) @[SMStateType(from), SMStateType(to)]
 #define SMStateType(x) x.class
@@ -64,6 +65,13 @@ typedef Class SMStateType;
  */
 - (void)willExitWithTransition:(SMTransition *)transition;
 
+@end
+
+
+/**
+ * For specifying transition where the from or to state matches any state.
+ */
+@interface SMStateTypeAny : NSObject
 @end
 
 

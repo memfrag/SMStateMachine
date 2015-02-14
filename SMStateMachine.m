@@ -22,6 +22,10 @@
 
 #import "SMStateMachine.h"
 
+@implementation SMStateTypeAny
+@end
+
+
 @interface SMStateMachine ()
 
 - (instancetype)init __attribute__((unavailable("init not available, call sharedInstance instead")));
@@ -44,14 +48,18 @@
 {
     // Make sure the state types are actually states
     for (NSArray *entry in transitions) {
-        SMStateType fromStateType = entry[0];
-        SMStateType toStateType = entry[1];
-        if (![fromStateType conformsToProtocol:@protocol(SMState)]
-            || ![toStateType conformsToProtocol:@protocol(SMState)]) {
+        id fromStateType = entry[0];
+        
+        if (!([fromStateType conformsToProtocol:@protocol(SMState)] || fromStateType == SMStateTypeAny.class)) {
+            return nil;
+        }
+        
+        id toStateType = entry[1];
+        if (!([toStateType conformsToProtocol:@protocol(SMState)] || toStateType == SMStateTypeAny.class)) {
             return nil;
         }
     }
-
+    
     SMStateMachine *stateMachine = [[SMStateMachine alloc] initWithTransitions:transitions initialState:initialState];
     return stateMachine;
 }
@@ -80,10 +88,10 @@
 - (BOOL)isLegalTransitionWithFromState:(id<SMState>)fromState toState:(id<SMState>)toState
 {
     for (NSArray *entry in self.transitions) {
-        SMStateType fromStateType = entry[0];
-        SMStateType toStateType = entry[1];
-        if ([fromState isMemberOfClass:fromStateType]
-            && [toState isMemberOfClass:toStateType]) {
+        id fromStateType = entry[0];
+        id toStateType = entry[1];
+        if ((fromStateType == SMStateTypeAny.class || [fromState isMemberOfClass:fromStateType])
+            && (toStateType == SMStateTypeAny.class || [toState isMemberOfClass:toStateType])) {
             // Yes, this is a legal transition.
             return YES;
         }
@@ -98,9 +106,9 @@
         if (toState == nil) {
             return NO;
         }
-
+        
         id<SMState> fromState = self.snapshotState;
-
+        
         if (fromState) {
             BOOL isLegal = [self isLegalTransitionWithFromState:fromState toState:toState];
             if (!isLegal) {
@@ -120,7 +128,7 @@
         transition.userInfo = userInfo;
         
         self.snapshotState = toState;
-
+        
         __weak typeof(self) weakSelf = self;
         
         dispatch_async(_queue, ^{
@@ -136,7 +144,7 @@
                       NSStringFromClass(SMStateType(fromState)),
                       NSStringFromClass(SMStateType(toState)));
             }
-
+            
             if ([toState respondsToSelector:@selector(didEnterWithTransition:)]) {
                 [toState didEnterWithTransition:transition];
             }
