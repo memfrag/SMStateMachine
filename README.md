@@ -32,7 +32,8 @@ NSArray *transitions = @[SMTransition(MyInitialState, MyOtherState),
 Create the state machine. Feed it the array of valid transitions and the initial state that the state machine should start in.
 
 ```
-SMStateMachine *stateMachine = [SMStateMachine stateMachineWithTransitions:transitions initialState:[MyInitialState new]];
+SMStateMachine *stateMachine = [SMStateMachine stateMachineWithTransitions:transitions 
+                                                              initialState:[MyInitialState new]];
 ```
 
 ## Step 4
