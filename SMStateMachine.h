@@ -113,6 +113,11 @@ typedef Class SMStateType;
 @property (nonatomic, assign) BOOL logTransitions;
 
 /**
+ * The state the machine is currently in.
+ */
+@property (nonatomic, strong) id<SMState> currentState;
+
+/**
  * Create a state machine that accepts the specified transitions.
  *
  * @param transitions Array of SMTransition(FromState, ToState) objects.

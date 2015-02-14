@@ -33,7 +33,6 @@
 
 @property (nonatomic, strong) NSArray *transitions;
 @property (nonatomic, strong) id<SMState> currentState;
-@property (nonatomic, strong) id<SMState> snapshotState;
 @property (nonatomic, strong) NSMutableDictionary *context;
 
 @end
@@ -50,7 +49,7 @@
     // Make sure the state types are actually states
     for (NSArray *entry in transitions) {
         id fromStateType = entry[0];
-                
+        
         if (!([fromStateType conformsToProtocol:@protocol(SMState)] || fromStateType == SMStateTypeAny.class)) {
             return nil;
         }
@@ -109,7 +108,7 @@
             return NO;
         }
         
-        id<SMState> fromState = self.snapshotState;
+        id<SMState> fromState = self.currentState;
         
         if (fromState) {
             BOOL isLegal = [self isLegalTransitionWithFromState:fromState toState:toState];
@@ -129,7 +128,7 @@
         transition.stateMachine = self;
         transition.context = _context;
         
-        self.snapshotState = toState;
+        self.currentState = toState;
         
         __weak typeof(self) weakSelf = self;
         
@@ -140,7 +139,6 @@
             if ([toState respondsToSelector:@selector(willEnterWithTransition:)]) {
                 [toState willEnterWithTransition:transition];
             }
-            weakSelf.currentState = toState;
             if (weakSelf.logTransitions) {
                 NSLog(@"Transition: %@ -> %@",
                       NSStringFromClass(SMStateType(fromState)),
