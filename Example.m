@@ -1,6 +1,3 @@
-//
-//  Copyright (c) 2015 Martin Johannesson. All rights reserved.
-//
 
 #import <Foundation/Foundation.h>
 #import "SMStateMachine.h"
