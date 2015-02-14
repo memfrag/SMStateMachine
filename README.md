@@ -44,6 +44,8 @@ Go to a state.
 [stateMachine goToState:[MyOtherState new] userInfo:nil];
 ```
 
+It's possible to go to a different state from within the `willEnterWithTransition:` and `didEnterWithTransition:` methods.
+
 ## Full Example
 
 ```
