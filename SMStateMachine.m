@@ -33,7 +33,8 @@
 
 @property (nonatomic, strong) NSArray *transitions;
 @property (nonatomic, strong) SMState currentState;
-@property (nonatomic, strong) NSMutableDictionary *context;
+@property (nonatomic, strong) id<SMState> currentStateContext;
+@property (nonatomic, strong) NSMutableDictionary *transitionContext;
 
 @end
 
@@ -70,8 +71,8 @@
     if (self) {
         [self setUpTransitions:transitions];
         [self setUpDispatchQueue];
-        _context = [NSMutableDictionary dictionary];
-        [self goToState:initialState];
+        _transitionContext = [NSMutableDictionary dictionary];
+        [self goToState:initialState becauseOfEvent:nil];
     }
     return self;
 }
@@ -107,12 +108,12 @@
     dispatch_async(_queue, ^{
         SMState requestedState = [weakSelf.currentState didFireEvent:event];
         if (requestedState) {
-            [weakSelf goToState:requestedState];
+            [weakSelf goToState:requestedState becauseOfEvent:event];
         }
     });
 }
 
-- (BOOL)goToState:(SMState)toState
+- (BOOL)goToState:(SMState)toState becauseOfEvent:(id<SMEvent>)event
 {
     if (toState == nil) {
         return NO;
@@ -140,13 +141,20 @@
     transition.fromState = fromState ? fromState : nil /* initial state */;
     transition.toState = toState;
     transition.stateMachine = self;
-    transition.context = _context;
-    
-    __weak typeof(self) weakSelf = self;
+    transition.event = event;
+    transition.transitionContext = _transitionContext;
+    transition.stateContext = self.currentStateContext;
     
     if (fromState && [(Class)fromState respondsToSelector:@selector(willExitWithTransition:)]) {
         [fromState willExitWithTransition:transition];
     }
+    
+    if (toState && [(Class)toState respondsToSelector:@selector(createStateContext)]) {
+        self.currentStateContext = [toState createStateContext];
+    } else {
+        self.currentStateContext = [[(Class)toState alloc] init];
+    }
+    transition.stateContext = self.currentStateContext;
 
     if ([(Class)toState respondsToSelector:@selector(willEnterWithTransition:)]) {
         [toState willEnterWithTransition:transition];
@@ -154,7 +162,7 @@
 
     self.currentState = toState;
 
-    if (weakSelf.logTransitions) {
+    if (self.logTransitions) {
         NSLog(@"Transition: %@ -> %@",
               NSStringFromClass(fromState),
               NSStringFromClass(toState));

@@ -28,10 +28,34 @@
 @class SMTransition;
 @class SMStateTypeWildcard;
 
+/**
+ * Used to specify a valid transition in the transition specification.
+ */
 #define SMTransition(from, to) @[SMState(from), SMState(to)]
+
+/**
+ * @define SMState
+ *
+ * Represents a state for use in type comparisons.
+ *
+ * @param x Name of a state class.
+ */
 #define SMState(x) x.class
+
+/**
+ * @define SMEvent
+ *
+ * Represents an event for use in type comparisons.
+ *
+ * @param x Name of a event class.
+ */
 #define SMEvent(x) x.class
 
+/**
+ * @typedef SMState
+ *
+ * Represents a state.
+ */
 typedef Class<SMState> SMState;
 
 /**
@@ -40,6 +64,13 @@ typedef Class<SMState> SMState;
 @protocol SMState <NSObject>
 
 @optional
+
+/**
+ * Create an instance of the current state class.
+ * If this method is not implemented, the default
+ * init method is used.
+ */
++ (instancetype)createStateContext;
 
 /**
  * Called after exiting the previous state.
@@ -73,6 +104,11 @@ typedef Class<SMState> SMState;
  * Events are received after didEnterWithTransition has been called
  * and before willExitWithTransition.
  *
+ * If this method is not implemented, there is no way to
+ * transition to any other state.
+ *
+ * Example:
+ *
  * @return A state to transition to, or nil if no transition was triggered.
  */
 + (SMState)didFireEvent:(id<SMEvent>)event;
@@ -92,7 +128,6 @@ typedef Class<SMState> SMState;
  */
 @protocol SMEvent <NSObject>
 @end
-
 
 /**
  * The transition currently being performed.
@@ -115,10 +150,20 @@ typedef Class<SMState> SMState;
 @property (nonatomic, weak) SMStateMachine *stateMachine;
 
 /**
+ * The event that triggered this transition.
+ */
+@property (nonatomic, weak) id<SMEvent> event;
+
+/**
  * Store custom data that needs to be passed
  * along in the context.
  */
-@property (nonatomic, weak) NSMutableDictionary *context;
+@property (nonatomic, weak) NSMutableDictionary *transitionContext;
+
+/**
+ * This is an instance of the state class.
+ */
+@property (nonatomic, weak) id<SMState> stateContext;
 
 @end
 
