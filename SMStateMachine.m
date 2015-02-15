@@ -22,7 +22,7 @@
 
 #import "SMStateMachine.h"
 
-@implementation SMStateTypeAny
+@implementation SMStateAny
 @end
 
 
@@ -32,7 +32,7 @@
 + (instancetype)new __attribute__((unavailable("new not available, call sharedInstance instead")));
 
 @property (nonatomic, strong) NSArray *transitions;
-@property (nonatomic, strong, readwrite) id<SMState> currentState;
+@property (nonatomic, strong) SMState currentState;
 @property (nonatomic, strong) NSMutableDictionary *context;
 
 @end
@@ -44,18 +44,18 @@
     dispatch_queue_t _queue;
 }
 
-+ (instancetype)stateMachineWithTransitions:(NSArray *)transitions initialState:(id<SMState>)initialState
++ (instancetype)stateMachineWithTransitions:(NSArray *)transitions initialState:(SMState)initialState
 {
     // Make sure the state types are actually states
     for (NSArray *entry in transitions) {
         id fromStateType = entry[0];
-        
-        if (!([fromStateType conformsToProtocol:@protocol(SMState)] || fromStateType == SMStateTypeAny.class)) {
+                
+        if (!([fromStateType conformsToProtocol:@protocol(SMState)] || fromStateType == SMStateAny.class)) {
             return nil;
         }
         
         id toStateType = entry[1];
-        if (!([toStateType conformsToProtocol:@protocol(SMState)] || toStateType == SMStateTypeAny.class)) {
+        if (!([toStateType conformsToProtocol:@protocol(SMState)] || toStateType == SMStateAny.class)) {
             return nil;
         }
     }
@@ -64,7 +64,7 @@
     return stateMachine;
 }
 
-- (instancetype)initWithTransitions:(NSArray *)transitions initialState:(id<SMState>)initialState
+- (instancetype)initWithTransitions:(NSArray *)transitions initialState:(SMState)initialState
 {
     self = [super init];
     if (self) {
@@ -86,13 +86,13 @@
     _queue = dispatch_queue_create("SMStateMachine", DISPATCH_QUEUE_SERIAL);
 }
 
-- (BOOL)isLegalTransitionWithFromState:(id<SMState>)fromState toState:(id<SMState>)toState
+- (BOOL)isLegalTransitionWithFromState:(SMState)fromState toState:(SMState)toState
 {
     for (NSArray *entry in self.transitions) {
-        id fromStateType = entry[0];
-        id toStateType = entry[1];
-        if ((fromStateType == SMStateTypeAny.class || [fromState isMemberOfClass:fromStateType])
-            && (toStateType == SMStateTypeAny.class || [toState isMemberOfClass:toStateType])) {
+        Class fromStateType = entry[0];
+        Class toStateType = entry[1];
+        if ((fromStateType == SMStateAny.class || fromState == fromStateType)
+            && (toStateType == SMStateAny.class || toState == toStateType)) {
             // Yes, this is a legal transition.
             return YES;
         }
@@ -101,57 +101,70 @@
     return NO;
 }
 
-- (BOOL)goToState:(id<SMState>)toState
+- (void)fireEvent:(id<SMEvent>)event
 {
-    @synchronized (self) {
-        if (toState == nil) {
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(_queue, ^{
+        SMState requestedState = [weakSelf.currentState didFireEvent:event];
+        if (requestedState) {
+            [weakSelf goToState:requestedState];
+        }
+    });
+}
+
+- (BOOL)goToState:(SMState)toState
+{
+    if (toState == nil) {
+        return NO;
+    }
+    
+    if (![(Class)toState conformsToProtocol:@protocol(SMState)]) {
+        return NO;
+    }
+    
+    SMState fromState = self.currentState;
+    
+    if (fromState) {
+        BOOL isLegal = [self isLegalTransitionWithFromState:fromState toState:toState];
+        if (!isLegal) {
+            NSLog(@"ERROR: Illegal transition: %@ -> %@",
+                  NSStringFromClass(fromState),
+                  NSStringFromClass(toState));
             return NO;
         }
-        
-        id<SMState> fromState = self.currentState;
-        
-        if (fromState) {
-            BOOL isLegal = [self isLegalTransitionWithFromState:fromState toState:toState];
-            if (!isLegal) {
-                NSLog(@"ERROR: Illegal transition: %@ -> %@",
-                      NSStringFromClass(SMStateType(fromState)),
-                      NSStringFromClass(SMStateType(toState)));
-                return NO;
-            }
-        } else {
-            // Initial state.
-        }
-        
-        SMTransition *transition = [SMTransition new];
-        transition.fromStateType = fromState ? SMStateType(fromState) : nil /* initial state */;
-        transition.toStateType = SMStateType(toState);
-        transition.stateMachine = self;
-        transition.context = _context;
-        
-        self.currentState = toState;
-        
-        __weak typeof(self) weakSelf = self;
-        
-        dispatch_async(_queue, ^{
-            if (fromState && [fromState respondsToSelector:@selector(willExitWithTransition:)]) {
-                [fromState willExitWithTransition:transition];
-            }
-            if ([toState respondsToSelector:@selector(willEnterWithTransition:)]) {
-                [toState willEnterWithTransition:transition];
-            }
-            if (weakSelf.logTransitions) {
-                NSLog(@"Transition: %@ -> %@",
-                      NSStringFromClass(SMStateType(fromState)),
-                      NSStringFromClass(SMStateType(toState)));
-            }
-            
-            if ([toState respondsToSelector:@selector(didEnterWithTransition:)]) {
-                [toState didEnterWithTransition:transition];
-            }
-        });
-        
-        return YES;
+    } else {
+        // Initial state.
     }
+    
+    SMTransition *transition = [SMTransition new];
+    transition.fromState = fromState ? fromState : nil /* initial state */;
+    transition.toState = toState;
+    transition.stateMachine = self;
+    transition.context = _context;
+    
+    __weak typeof(self) weakSelf = self;
+    
+    if (fromState && [(Class)fromState respondsToSelector:@selector(willExitWithTransition:)]) {
+        [fromState willExitWithTransition:transition];
+    }
+
+    if ([(Class)toState respondsToSelector:@selector(willEnterWithTransition:)]) {
+        [toState willEnterWithTransition:transition];
+    }
+
+    self.currentState = toState;
+
+    if (weakSelf.logTransitions) {
+        NSLog(@"Transition: %@ -> %@",
+              NSStringFromClass(fromState),
+              NSStringFromClass(toState));
+    }
+    
+    if ([(Class)toState respondsToSelector:@selector(didEnterWithTransition:)]) {
+        [toState didEnterWithTransition:transition];
+    }
+    
+    return YES;
 }
 
 @end

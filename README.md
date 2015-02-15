@@ -4,16 +4,18 @@ A GCD backed Objective-C state machine. MIT license.
 
 ## Step 1
 
-Create state objects that adopt the SMState protocol.
+A state is a class that conforms to the SMState protocol. There are four class
+methods that handle the state transitions.
 
 ```
 @interface MyInitialState : NSObject <SMState>
 @end
 
 @implementation MyInitialState
-- (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
-- (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
-- (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
++ (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
++ (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
++ (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
++ (SMState)didFireEvent:(id<SMEvent>)
 @end
 ```
 

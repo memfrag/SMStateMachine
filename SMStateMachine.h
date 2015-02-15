@@ -22,17 +22,20 @@
 
 #import <Foundation/Foundation.h>
 
+@protocol SMState;
+@protocol SMEvent;
 @class SMStateMachine;
 @class SMTransition;
 @class SMStateTypeWildcard;
 
-#define SMTransition(from, to) @[SMStateType(from), SMStateType(to)]
-#define SMStateType(x) x.class
+#define SMTransition(from, to) @[SMState(from), SMState(to)]
+#define SMState(x) x.class
+#define SMEvent(x) x.class
 
-typedef Class SMStateType;
+typedef Class<SMState> SMState;
 
 /**
- * State objects conform to the SMState protocol.
+ * State classes conform to the SMState protocol.
  */
 @protocol SMState <NSObject>
 
@@ -45,7 +48,7 @@ typedef Class SMStateType;
  *
  * @param transition The transition object that triggered the call.
  */
-- (void)willEnterWithTransition:(SMTransition *)transition;
++ (void)willEnterWithTransition:(SMTransition *)transition;
 
 /**
  * Called after entering the current state.
@@ -54,7 +57,7 @@ typedef Class SMStateType;
  *
  * @param transition The transition object that triggered the call.
  */
-- (void)didEnterWithTransition:(SMTransition *)transition;
++ (void)didEnterWithTransition:(SMTransition *)transition;
 
 /**
  * Called before exiting the current state.
@@ -63,7 +66,16 @@ typedef Class SMStateType;
  *
  * @param transition The transition object that triggered the call.
  */
-- (void)willExitWithTransition:(SMTransition *)transition;
++ (void)willExitWithTransition:(SMTransition *)transition;
+
+/**
+ * Called when an event is fired. Might trigger transition.
+ * Events are received after didEnterWithTransition has been called
+ * and before willExitWithTransition.
+ *
+ * @return A state to transition to, or nil if no transition was triggered.
+ */
++ (SMState)didFireEvent:(id<SMEvent>)event;
 
 @end
 
@@ -71,7 +83,14 @@ typedef Class SMStateType;
 /**
  * For specifying transition where the from or to state matches any state.
  */
-@interface SMStateTypeAny : NSObject
+@interface SMStateAny : NSObject
+@end
+
+
+/**
+ * Event that can be fired to trigger transitions.
+ */
+@protocol SMEvent <NSObject>
 @end
 
 
@@ -83,12 +102,12 @@ typedef Class SMStateType;
 /**
  * The type of the state that is being transitioned from.
  */
-@property (nonatomic, weak) SMStateType fromStateType;
+@property (nonatomic, weak) SMState fromState;
 
 /**
  * The type of the state that is being transitioned to.
  */
-@property (nonatomic, weak) SMStateType toStateType;
+@property (nonatomic, weak) SMState toState;
 
 /**
  * The state machine that is performing the transition.
@@ -113,11 +132,6 @@ typedef Class SMStateType;
 @property (nonatomic, assign) BOOL logTransitions;
 
 /**
- * The state the machine is currently in.
- */
-@property (nonatomic, strong, readonly) id<SMState> currentState;
-
-/**
  * Create a state machine that accepts the specified transitions.
  *
  * @param transitions Array of SMTransition(FromState, ToState) objects.
@@ -125,14 +139,11 @@ typedef Class SMStateType;
  * @return On success, a state machine. On failure, i.e. invalid transitions, nil.
  */
 + (instancetype)stateMachineWithTransitions:(NSArray *)transitions
-                               initialState:(id<SMState>)initialState;
+                               initialState:(SMState)initialState;
 
 /**
- * Go to a new state (asynchronously).
- * Ignores transitions that have not been added to the state machine.
- *
- * @return Returns YES if transition is legal.
+ * Fire an event that may trigger a transition.
  */
-- (BOOL)goToState:(id<SMState>)toState;
+- (void)fireEvent:(id<SMEvent>)event;
 
 @end
