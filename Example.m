@@ -3,6 +3,8 @@
 #import "SMStateMachine.h"
 
 @interface MyStartEvent : NSObject <SMEvent>
+@property (nonatomic, copy, readonly) NSString *message;
+- (instancetype)initWithMessage:(NSString *)message;
 @end
 
 @interface MyOtherEvent : NSObject <SMEvent>
@@ -22,20 +24,28 @@
 @end
 
 
-
 @implementation MyStartEvent
+- (instancetype)initWithMessage:(NSString *)message {
+    self = [super init];
+    if (self) {
+        _message = [message copy];
+    }
+    return self;
+}
 @end
 
 @implementation MyOtherEvent
 @end
 
 @implementation MyInitialState
++ (instancetype)createStateContext { NSLog(@"%s", __func__); return [self new]; }
 + (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (SMState)didFireEvent:(id<SMEvent>)event {
     NSLog(@"%s %@", __func__, NSStringFromClass(event.class));
     if (SMEvent(event) == SMEvent(MyStartEvent)) {
+        NSLog(@"Message: %@", ((MyStartEvent *)event).message);
         return SMState(MyFirstState);
     }
     return nil;
@@ -43,6 +53,7 @@
 @end
 
 @implementation MyFirstState
++ (instancetype)createStateContext { NSLog(@"%s", __func__); return [self new]; }
 + (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)didEnterWithTransition:(SMTransition *)transition {
@@ -76,6 +87,7 @@
 @end
 
 @implementation MyThirdState
++ (instancetype)createStateContext { NSLog(@"%s", __func__); return [self new]; }
 + (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
@@ -95,7 +107,7 @@ void runStateMachine()
     
     SMStateMachine *stateMachine = [SMStateMachine stateMachineWithTransitions:transitions initialState:SMState(MyInitialState)];
     stateMachine.logTransitions = YES;
-    [stateMachine fireEvent:[MyStartEvent new]];
+    [stateMachine fireEvent:[[MyStartEvent alloc] initWithMessage:@"Hello, World!"]];
     
     sleep(3);
 }
