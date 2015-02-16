@@ -12,10 +12,19 @@ methods that handle the state transitions.
 @end
 
 @implementation MyInitialState
-+ (instancetype)createStateContext { return [self new]; }
-+ (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
-+ (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
-+ (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
+
++ (void)willExitWithTransition:(SMTransition *)transition {
+	NSLog(@"%s", __func__);
+}
+
++ (void)willEnterWithTransition:(SMTransition *)transition {
+	NSLog(@"%s", __func__);
+}
+
++ (void)didEnterWithTransition:(SMTransition *)transition {
+	NSLog(@"%s", __func__);
+}
+
 + (SMState)didFireEvent:(id<SMEvent>)event stateContext:(id<SMState>)stateContext {
 	MyInitialState *context = (MyInitialState *)stateContext;
 	if (SMEvent(event) == SMEvent(MyStartEvent)) {
