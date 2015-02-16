@@ -111,7 +111,7 @@ typedef Class<SMState> SMState;
  *
  * @return A state to transition to, or nil if no transition was triggered.
  */
-+ (SMState)didFireEvent:(id<SMEvent>)event;
++ (SMState)didFireEvent:(id<SMEvent>)event stateContext:(id<SMState>)stateContext;
 
 @end
 

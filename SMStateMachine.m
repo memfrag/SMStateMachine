@@ -106,7 +106,7 @@
 {
     __weak typeof(self) weakSelf = self;
     dispatch_async(_queue, ^{
-        SMState requestedState = [weakSelf.currentState didFireEvent:event];
+        SMState requestedState = [weakSelf.currentState didFireEvent:event stateContext:self.currentStateContext];
         if (requestedState) {
             [weakSelf goToState:requestedState becauseOfEvent:event];
         }

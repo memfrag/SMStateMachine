@@ -42,7 +42,7 @@
 + (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
-+ (SMState)didFireEvent:(id<SMEvent>)event {
++ (SMState)didFireEvent:(id<SMEvent>)event stateContext:(id<SMState>)stateContext {
     NSLog(@"%s %@", __func__, NSStringFromClass(event.class));
     if (SMEvent(event) == SMEvent(MyStartEvent)) {
         NSLog(@"Message: %@", ((MyStartEvent *)event).message);
@@ -60,7 +60,7 @@
     NSLog(@"%s", __func__);
     [transition.stateMachine fireEvent:[MyOtherEvent new]];
 }
-+ (SMState)didFireEvent:(id<SMEvent>)event {
++ (SMState)didFireEvent:(id<SMEvent>)event stateContext:(id<SMState>)stateContext {
     NSLog(@"%s %@", __func__, NSStringFromClass(event.class));
     if (SMEvent(event) == SMEvent(MyOtherEvent)) {
         return SMState(MySecondState);
@@ -77,7 +77,7 @@
     NSLog(@"%s", __func__);
     [transition.stateMachine fireEvent:[MyOtherEvent new]];
 }
-+ (SMState)didFireEvent:(id<SMEvent>)event {
++ (SMState)didFireEvent:(id<SMEvent>)event stateContext:(id<SMState>)stateContext {
     NSLog(@"%s %@", __func__, NSStringFromClass(event.class));
     if (SMEvent(event) == SMEvent(MyOtherEvent)) {
         return SMState(MyThirdState);
@@ -91,7 +91,7 @@
 + (void)willExitWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)willEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
 + (void)didEnterWithTransition:(SMTransition *)transition { NSLog(@"%s", __func__); }
-+ (SMState)didFireEvent:(id<SMEvent>)event {
++ (SMState)didFireEvent:(id<SMEvent>)event stateContext:(id<SMState>)stateContext {
     NSLog(@"%s %@", __func__, NSStringFromClass(event.class));
     return nil;
 }
