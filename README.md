@@ -1,6 +1,6 @@
 # SMStateMachine
 
-A GCD backed Objective-C state machine. MIT license.
+A GCD backed Objective-C state machine. Released as open source under the MIT license.
 
 ## Step 1
 
